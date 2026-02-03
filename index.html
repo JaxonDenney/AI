@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crisis Verification: Digital vs. Analog</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=VT323&family=Brush+Script+MT&family=Permanent+Marker&family=Courier+Prime&family=Share+Tech+Mono&family=Inter:wght@400;800&display=swap');
+
+        :root {
+            --paper-color: #fdfaf0;
+            --paper-texture: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+            --lined-paper: repeating-linear-gradient(transparent, transparent 27px, #99aab5 28px);
+        }
+
+        body {
+            background-color: #08080a;
+            color: #a1a1aa;
+            background-image: 
+                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                radial-gradient(circle at 50% 50%, #1a1a20 0%, #08080a 100%);
+            background-size: 100% 4px, 100% 100%;
+            background-attachment: fixed;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* --- FONTS --- */
+        .handwritten { font-family: 'Brush Script MT', cursive; }
+        .marker { font-family: 'Permanent Marker', cursive; }
+        .typewriter { font-family: 'Special Elite', monospace; }
+        .courier { font-family: 'Courier Prime', monospace; }
+        .digital { font-family: 'VT323', monospace; }
+        .tech { font-family: 'Share Tech Mono', monospace; }
+
+        /* --- VISUAL FX --- */
+        .scanline {
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .glitch { animation: glitch-anim 3s infinite linear alternate-reverse; }
+        @keyframes glitch-anim {
+            0% { transform: translate(0); text-shadow: -2px 0 #ff00c1, 2px 0 #00fff9; }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); text-shadow: 2px 0 #ff00c1, -2px 0 #00fff9; }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        .coffee-stain {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(111, 78, 55, 0.05) 40%, rgba(111, 78, 55, 0.2) 90%, transparent 100%);
+            border-radius: 50%;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+        }
+
+        /* --- REALISTIC ARTIFACTS --- */
+        .doc-shadow {
+            box-shadow: 
+                0 1px 1px rgba(0,0,0,0.15), 
+                0 2px 2px rgba(0,0,0,0.15), 
+                0 4px 4px rgba(0,0,0,0.15), 
+                0 8px 8px rgba(0,0,0,0.15);
+        }
+
+        .doc-container {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .doc-container:hover {
+            transform: scale(1.02) rotate(0deg) !important;
+            z-index: 50;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+
+        /* 1. Standard Paper */
+        .paper-scrap {
+            background-color: var(--paper-color);
+            background-image: var(--paper-texture);
+        }
+
+        /* 2. Lined Letter */
+        .lined-paper {
+            background-color: #fff;
+            background-image: var(--lined-paper);
+            line-height: 28px;
+        }
+
+        /* 3. Tech Form */
+        .tech-form {
+            background-color: #eff6ff;
+            background-image: radial-gradient(#dbeafe 2px, transparent 2px);
+            background-size: 20px 20px;
+            border-top: 8px solid #1e3a8a;
+        }
+        .punch-hole {
+            width: 15px; height: 15px;
+            background-color: #08080a;
+            border-radius: 50%;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        /* 4. Radio Transcript (Dot Matrix Style) */
+        .transcript {
+            background-color: #f0fdf4;
+            border-left: 2px dashed #bbb;
+            border-right: 2px dashed #bbb;
+            font-family: 'Courier Prime', monospace;
+            position: relative;
+        }
+        .transcript::before, .transcript::after {
+            content: "";
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 12px;
+            background-image: radial-gradient(#08080a 2px, transparent 2px);
+            background-size: 100% 20px;
+        }
+        .transcript::before { left: 4px; }
+        .transcript::after { right: 4px; }
+
+        .tape {
+            background-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            backdrop-filter: blur(1px);
+            position: absolute;
+            height: 35px;
+            width: 100px;
+            z-index: 10;
+            border-left: 1px solid rgba(255,255,255,0.3);
+            border-right: 1px solid rgba(255,255,255,0.3);
+            transform: rotate(-1deg);
+        }
+
+        .paper-clip {
+            position: absolute;
+            width: 12px; height: 40px;
+            border: 3px solid #666;
+            border-radius: 10px;
+            top: -15px; left: 20px;
+            z-index: 20;
+            box-shadow: 2px 2px 2px rgba(0,0,0,0.3);
+            background: transparent;
+            border-bottom: none;
+        }
+        .paper-clip::after {
+            content: "";
+            position: absolute;
+            width: 100%; height: 70%;
+            border: 3px solid #666;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            bottom: -3px; left: -3px;
+        }
+
+        .whiteout {
+            background-color: rgba(255,255,255,0.9);
+            transform: skew(-10deg);
+            padding: 0 4px;
+        }
+
+        /* --- VERIFICATION LOGIC --- */
+        .verify-active #digitalPanel { filter: grayscale(100%) contrast(120%) brightness(30%); }
+        .verify-active #digitalOverlay { display: flex; }
+        .verify-active #analogStamp { opacity: 1; transform: scale(1) rotate(-12deg); }
+        
+        .loading-bar { width: 0%; transition: width 1.5s ease-in-out; }
+        .verify-active .loading-bar { width: 100%; }
+        
+        .clip-path-grass {
+             clip-path: polygon(0% 100%, 5% 80%, 10% 100%, 15% 85%, 20% 100%, 25% 80%, 30% 100%, 35% 85%, 40% 100%, 45% 80%, 50% 100%, 55% 85%, 60% 100%, 65% 80%, 70% 100%, 75% 85%, 80% 100%, 85% 80%, 90% 100%, 95% 85%, 100% 100%);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 pb-40">
+
+    <div class="max-w-7xl mx-auto space-y-20">
+        
+        <!-- HEADER -->
+        <header class="flex flex-col md:flex-row justify-between items-end border-b border-zinc-800 pb-8">
+            <div>
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="relative flex h-3 w-3">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                    </span>
+                    <span class="tech text-red-500 text-xs font-bold uppercase tracking-[0.3em]">Clearance: Level 4</span>
+                </div>
+                <h1 class="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter">
+                    Truth<span class="text-zinc-700">_</span>Lab<span class="text-red-600">.</span>2040
+                </h1>
+                <p class="text-zinc-500 tech text-sm mt-4 border-l-2 border-zinc-800 pl-4 max-w-lg">
+                    "OBJECTIVE: Authenticate reality. Compare generative data streams against recovered physical artifacts from Sector 4 (Huntsville)."
+                </p>
+            </div>
+            
+            <button onclick="toggleVerification()" id="verifyBtn" class="group mt-10 md:mt-0 relative overflow-hidden bg-zinc-900 text-zinc-400 border border-zinc-700 px-10 py-5 rounded-sm uppercase font-bold tracking-widest transition-all hover:border-red-600 hover:text-red-500 hover:shadow-[0_0_40px_rgba(220,38,38,0.2)]">
+                <span class="relative z-10 tech" id="btnText">Initiate Verification Protocol</span>
+                <div id="btnProgress" class="absolute inset-0 bg-red-900/50 transform -translate-x-full transition-transform duration-[2000ms] ease-in-out opacity-50 group-hover:translate-x-0"></div>
+                <!-- Corner accents -->
+                <div class="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-current"></div>
+                <div class="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-current"></div>
+            </button>
+        </header>
+
+        <!-- --- SECTION 1: THE INTERACTIVE LAB --- -->
+        <div class="grid lg:grid-cols-2 gap-8 lg:gap-20 items-start relative">
+            
+            <!-- LEFT: THE DIGITAL LIE (3D) -->
+            <div id="digitalPanel" class="relative group transition-all duration-1000">
+                <!-- Frame -->
+                <div class="border-4 border-zinc-800 bg-[#050505] rounded-xl shadow-2xl relative overflow-hidden h-[650px] flex flex-col">
+                    <div class="scanline absolute inset-0 pointer-events-none"></div>
+                    
+                    <!-- Top HUD -->
+                    <div class="bg-zinc-900/80 backdrop-blur p-4 border-b border-zinc-800 flex justify-between items-center relative z-20">
+                        <div class="flex items-center gap-3">
+                            <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_#ef4444]"></span>
+                            <span class="digital text-red-500 text-xl tracking-wide">LIVE_FEED: SAT_884</span>
+                        </div>
+                        <div class="flex flex-col text-right">
+                            <span class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider">Algorithm: Neural_Storm_v9</span>
+                            <span class="text-[9px] text-red-900 uppercase font-bold tracking-wider animate-pulse">Encryption Broken</span>
+                        </div>
+                    </div>
+
+                    <!-- 3D Weather Container -->
+                    <div id="weather-3d-container" class="relative grow bg-[#020202] overflow-hidden w-full h-full">
+                        <!-- Canvas injected here -->
+                        
+                        <!-- Floating HUD Elements -->
+                        <div class="absolute top-6 left-6 border-l-4 border-red-600 pl-4 pointer-events-none z-10">
+                            <h2 class="digital text-6xl text-white leading-none glitch mb-1">CAT 6</h2>
+                            <p class="text-[10px] text-red-500 uppercase font-bold tracking-[0.2em] bg-red-900/20 px-2 py-1 inline-block">Global Threat Level: Critical</p>
+                        </div>
+                        
+                        <div class="absolute bottom-6 right-6 text-right pointer-events-none z-10 space-y-2">
+                             <div class="bg-black/60 border border-zinc-800 p-2 backdrop-blur-sm">
+                                 <p class="tech text-[10px] text-zinc-400">Wind Speed</p>
+                                 <p class="digital text-2xl text-red-500">282 MPH</p>
+                             </div>
+                             <div class="bg-red-600 border border-red-500 px-4 py-1 text-white text-xs font-bold animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.5)]">
+                                 ⚠ EVACUATE SECTOR 4
+                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Scrolling Chat -->
+                    <div class="h-40 bg-zinc-900 border-t border-zinc-800 relative overflow-hidden flex flex-col z-20">
+                        <div class="bg-black text-[9px] text-zinc-500 px-3 py-1 uppercase tracking-widest border-b border-zinc-800 flex justify-between">
+                            <span>Global_Net_Chat</span>
+                            <span class="text-green-500">● 14M Users Online</span>
+                        </div>
+                        <div class="p-4 space-y-2 overflow-hidden relative">
+                             <!-- Chat Items -->
+                             <div class="digital text-sm text-blue-400 opacity-60">User_99: <span class="text-zinc-500">Wait, the sky is blue here.</span></div>
+                             <div class="digital text-sm text-red-500 font-bold bg-red-900/10 p-1 border-l-2 border-red-500">[SYS_ADMIN]: User_99 flagged for misinformation.</div>
+                             <div class="digital text-sm text-green-400">Bot_Alpha: <span class="text-zinc-400">I see the waves! They are 100ft tall!</span></div>
+                             <div class="digital text-sm text-green-400">Bot_Beta: <span class="text-zinc-400">Florida has been deleted. Do not look outside.</span></div>
+                             <div class="digital text-sm text-green-400">Bot_Gamma: <span class="text-zinc-400">Buying shelter credits saved my life.</span></div>
+                             <div class="digital text-sm text-blue-400 opacity-60">User_Real: <span class="text-zinc-500">It's a simulation! Check the radio!</span></div>
+                             
+                             <div class="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent pointer-events-none"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- "FAKE" Overlay (Hidden) -->
+                <div id="digitalOverlay" class="absolute inset-0 bg-black/90 hidden flex-col justify-center items-center z-30 backdrop-blur-sm border-4 border-red-600 shadow-[0_0_100px_rgba(220,38,38,0.4)]">
+                    <div class="border-8 border-red-600 p-10 transform -rotate-12 mix-blend-screen bg-black shadow-[10px_10px_0px_#7f1d1d]">
+                        <h2 class="text-8xl font-black text-red-600 uppercase tracking-tighter scale-y-150">FAKE</h2>
+                    </div>
+                    <div class="mt-12 text-center space-y-2">
+                        <p class="tech text-red-500 text-2xl tracking-[0.5em] animate-pulse">GENERATIVE HALLUCINATION</p>
+                        <p class="text-zinc-500 text-xs uppercase tech">Confidence Interval: 99.99%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: THE ANALOG TRUTH -->
+            <div class="relative pt-12 md:pt-0">
+                <!-- Header -->
+                <div class="flex justify-between items-center mb-4 px-2 border-b border-zinc-800 pb-2">
+                    <h3 class="tech text-zinc-400 font-bold uppercase text-xs tracking-widest flex items-center gap-3">
+                        <span class="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_10px_#22c55e]"></span> 
+                        Physical Artifact
+                    </h3>
+                    <span class="text-[10px] text-zinc-600 uppercase courier font-bold bg-zinc-900 px-2 py-1 rounded">Ref: J.Denney-Log-44</span>
+                </div>
+
+                <!-- The Notebook -->
+                <div class="doc-container paper-scrap p-8 md:p-12 h-[650px] relative rounded-sm rotate-1 flex flex-col doc-shadow">
+                    <div class="coffee-stain top-0 right-0 opacity-40"></div>
+                    
+                    <!-- Paper Content -->
+                    <div class="relative z-10 h-full flex flex-col">
+                        <div class="border-b-2 border-zinc-300 pb-4 mb-8 flex justify-between items-end">
+                            <div>
+                                <h2 class="typewriter text-4xl font-bold text-zinc-900 mb-1">Log Entry #44</h2>
+                                <p class="courier text-xs text-zinc-500 mt-1 uppercase tracking-widest">Observer: J. Denney</p>
+                            </div>
+                            <span class="handwritten text-3xl text-blue-900 transform -rotate-2">Oct 20, 2040</span>
+                        </div>
+
+                        <div class="typewriter text-zinc-800 text-base leading-loose space-y-8 md:max-w-[60%]">
+                            <p>
+                                <span class="bg-yellow-200/50 px-1 font-bold">0800 Hours:</span> The terminal is screaming. It shows a hurricane named "Genesis" swallowing the entire Gulf Coast.
+                            </p>
+                            <p>
+                                <span class="bg-yellow-200/50 px-1 font-bold">0815 Hours:</span> I walked outside. The air is still. The birds are singing. My mercury barometer reads <strong class="underline decoration-red-500 decoration-2 decoration-wavy">30.01 inHg</strong> (Steady).
+                            </p>
+                            <p>
+                                <span class="bg-yellow-200/50 px-1 font-bold">0830 Hours:</span> Contacted Captain Elias on Shortwave. He's fishing off the Mobile pier. He says the water is glass. <span class="bg-zinc-200 px-1">"Ghost Weather,"</span> he calls it.
+                            </p>
+                        </div>
+
+                        <!-- Interactive Polaroid -->
+                        <div class="absolute top-32 right-2 md:right-6 w-44 z-20 transform rotate-3 doc-shadow group hover:scale-125 hover:-rotate-2 transition-all duration-300 bg-white p-3 pb-8 cursor-pointer">
+                            <div class="w-full h-36 bg-sky-200 relative overflow-hidden border border-zinc-200">
+                                <div class="absolute top-4 right-4 w-8 h-8 bg-yellow-400 rounded-full shadow-[0_0_20px_rgba(250,204,21,0.8)]"></div>
+                                <div class="absolute bottom-0 w-full h-10 bg-green-800 clip-path-grass"></div>
+                                <div class="absolute bottom-4 left-4 w-2 h-12 bg-zinc-700 rounded-full"></div> <!-- Fence post -->
+                                <div class="absolute bottom-4 left-12 w-2 h-12 bg-zinc-700 rounded-full"></div> 
+                                <div class="absolute bottom-8 left-0 w-full h-1 bg-zinc-700"></div>
+                            </div>
+                            <div class="marker text-center text-xs mt-3 text-zinc-800 rotate-[-1deg] text-zinc-600">08:00 AM - No Storm</div>
+                            <div class="tape -top-4 left-1/3 rotate-2 opacity-80"></div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="mt-auto pt-8 border-t-2 border-zinc-300 border-dashed flex justify-between items-end">
+                            <div>
+                                <p class="text-[9px] uppercase font-bold text-zinc-400 mb-2 tracking-widest">Authenticated Signature</p>
+                                <p class="handwritten text-5xl text-blue-900 transform -rotate-2 mix-blend-multiply">Jaxon Denney</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="courier text-[10px] text-zinc-500 uppercase">Verification Code</p>
+                                <p class="typewriter text-lg font-bold text-zinc-800 tracking-widest bg-zinc-100 px-2 mt-1">RED-OAK-2009</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Verified Stamp (Hidden) -->
+                    <div id="analogStamp" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-[8px] border-green-700 text-green-700 p-8 text-6xl font-black uppercase opacity-0 transition-all duration-500 pointer-events-none z-30 mix-blend-multiply rotate-[-12deg] backdrop-blur-[1px] shadow-xl rounded-xl">
+                        VERIFIED
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- --- SECTION 2: THE EVIDENCE LOCKER (DIARY GRID) --- -->
+        <div class="pt-32 border-t border-zinc-800">
+            <div class="flex flex-col items-center mb-20 text-center">
+                <span class="text-red-500 font-bold uppercase tracking-[0.4em] text-xs mb-4">Subject: Jaxon Denney</span>
+                <h2 class="text-5xl md:text-6xl font-black text-white uppercase italic tracking-tighter">
+                    Evidence <span class="text-zinc-700">Locker</span>
+                </h2>
+                <div class="w-32 h-1 bg-red-600 mt-8 mb-4"></div>
+                <p class="text-zinc-500 max-w-lg tech text-sm">"Physical documents recovered from Sector 4. Classification: HUMAN ORIGIN."</p>
+            </div>
+
+            <!-- MASONRY GRID OF ENTRIES -->
+            <div class="grid md:grid-cols-2 gap-16 relative px-4 max-w-6xl mx-auto">
+                
+                <!-- DOCUMENT 1: WORK ORDER (Entry 1) -->
+                <div class="doc-container tech-form p-0 rounded shadow-2xl rotate-[-1deg] relative overflow-hidden group">
+                    <div class="bg-[#1e3a8a] text-white p-5 flex justify-between items-center relative">
+                        <!-- Punch Holes -->
+                        <div class="absolute top-1/2 -translate-y-1/2 left-4 punch-hole"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 left-10 punch-hole"></div>
+                        
+                        <div class="pl-16">
+                            <h3 class="font-bold uppercase tracking-widest text-lg">Work Order #4092</h3>
+                            <p class="text-[10px] opacity-70 tech">Sector: Energy Maintenance</p>
+                        </div>
+                        <div class="border border-white/30 px-2 py-1 text-xs font-mono bg-blue-900/50">STATUS: COMPLETE</div>
+                    </div>
+                    
+                    <div class="p-8 md:p-10 space-y-6 relative">
+                        <div class="paper-clip"></div>
+                        
+                        <div class="flex justify-between border-b-2 border-blue-200 pb-2 mb-6">
+                            <span class="text-xs font-bold text-blue-900 uppercase tracking-wider">Tech: J. Denney</span>
+                            <span class="text-xs font-bold text-blue-900 uppercase tracking-wider">Date: Oct 4, 2040</span>
+                        </div>
+                        
+                        <div class="font-mono text-sm text-blue-900/80 leading-relaxed text-justify">
+                            <p class="mb-4"><strong class="text-blue-900">LOG SUMMARY:</strong> The sun was brutal today while I was up on the roof of the comms-shack. I spent six hours soldering copper connections on our solar array, my skin slick with sweat and grit. It’s a strange irony—I have a degree in digital marketing sitting in a damp drawer. I was trained to create "engagement," but in a world where 99% of the web is bots talking to other bots, there’s no one left to engage.</p>
+                            
+                            <p>My work now is physical. I’m a <span class="bg-yellow-200 px-1 text-black">Data Scrubber</span>. Today, I found a cache of old 2020-era laptops in a collapsed basement. It’s like being a digital archaeologist. Education has changed too; the kids in our settlement don't use tablets. They learn through master-apprentice roles. You can't trust digital "how-to" guides anymore. Real knowledge is passed down through breath and touch now.</p>
+                        </div>
+                        
+                        <div class="pt-4 mt-6 bg-white p-4 border border-blue-200 rounded text-xs text-blue-800 shadow-sm transform rotate-1">
+                            <strong class="uppercase text-blue-600">Supervisor Note:</strong> "Efficiency up 12%. Good solder work."
+                            <div class="mt-2 h-8 w-24 bg-contain bg-no-repeat opacity-50" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png'); filter: invert(20%) sepia(100%) saturate(200%) hue-rotate(200deg);"></div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- DOCUMENT 2: HANDWRITTEN LETTER (Entry 2) -->
+                <div class="doc-container lined-paper p-10 md:p-14 rotate-2 relative doc-shadow">
+                    <div class="tape -top-4 left-20 rotate-[-2deg]"></div>
+                    <div class="coffee-stain bottom-10 right-10 opacity-20"></div>
+                    
+                    <div class="flex justify-between items-start mb-8">
+                        <span class="handwritten text-4xl text-zinc-800">Dear Jaxon,</span>
+                        <!-- Stamp -->
+                        <div class="border-2 border-red-300 p-1 transform rotate-6 bg-red-50">
+                            <div class="w-12 h-14 border border-red-200 flex flex-col items-center justify-center p-1">
+                                <div class="w-8 h-8 rounded-full bg-red-800 opacity-20 mb-1"></div>
+                                <span class="text-[6px] text-red-800 font-bold uppercase text-center leading-none">US Post<br>Sector 4</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p class="handwritten text-2xl md:text-3xl text-zinc-700 leading-loose">
+                        Oct 12. A traveler heading north brought me a letter from Sarah today. Seeing her messy, slanted handwriting made my chest ache. I haven’t seen her face on a screen in three years. The last time we tried a video call, the "auto-enhance" software smoothed her skin until she looked like a plastic doll.
+                    </p>
+                    <p class="handwritten text-2xl md:text-3xl text-zinc-700 leading-loose mt-6">
+                        That’s why we started the "Handshake Protocol." We only trade physical paper. Every letter includes a "humanity marker." Today’s marker was about the blue ribbon she won in 2nd grade. Seeing that made me breathe again. In 2040, love isn't a "like" or a "share." Love is the effort it takes to send a piece of paper across fifty miles of broken roads.
+                    </p>
+                    
+                    <p class="handwritten text-3xl text-zinc-600 mt-10 text-right pr-10">- J.D.</p>
+                </div>
+
+
+                <!-- DOCUMENT 3: RADIO TRANSCRIPT (Entry 3) -->
+                <div class="doc-container transcript p-8 rotate-[-1deg] relative doc-shadow">
+                    <div class="tape -top-3 right-1/3 rotate-1"></div>
+                    <div class="absolute top-6 right-8 text-red-600 border-2 border-red-600 px-3 py-1 font-bold text-xs uppercase transform -rotate-12 opacity-80 mix-blend-multiply">Verified Human Source</div>
+                    
+                    <h3 class="courier font-bold text-2xl mb-2 uppercase tracking-tighter">H.O.N. Broadcast Log</h3>
+                    <p class="courier text-xs text-zinc-500 mb-8 border-b-2 border-zinc-300 pb-2 flex justify-between">
+                        <span>Freq: 14.220 MHz</span>
+                        <span>Operator: J. Denney</span>
+                    </p>
+                    
+                    <div class="courier text-xs md:text-sm text-zinc-800 space-y-6 leading-relaxed">
+                        <p>> <span class="font-bold bg-zinc-200">TIMESTAMP [Oct 20, 2040]:</span> The settlement's emergency terminal went into a frantic loop this morning. A "Global Alert" flashed red, claiming a Category 6 hurricane was currently erasing the Florida coastline.</p>
+                        
+                        <p>> <span class="font-bold bg-zinc-200">OBSERVATION:</span> Ten years ago, I would have panicked. Today, I walked onto my porch. The sky was a dusty, peaceful blue. No wind. No pressure drop.</p>
+                        
+                        <p>> <span class="font-bold bg-zinc-200">VERIFICATION:</span> I cranked the short-wave to the Human Observer Network (HON). A guy named Miller in Pensacola verified: <span class="italic text-red-800">"It’s a flat calm down here, Jaxon. The 'Genesis' storm is a ghost."</span></p>
+                        
+                        <p>> <span class="font-bold bg-zinc-200">ANALYSIS:</span> It turns out the bot-farms fabricated the disaster to spike synthetic fuel prices. It’s a horrifying realization that an entire state can be "destroyed" in the minds of millions while the sun is shining.</p>
+                    </div>
+                    
+                    <!-- Perforation dots visual on sides -->
+                    <div class="absolute left-1 top-0 bottom-0 w-2 flex flex-col justify-between py-2 space-y-4 overflow-hidden">
+                        <div class="w-1.5 h-1.5 rounded-full bg-zinc-800 opacity-20"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-zinc-800 opacity-20"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-zinc-800 opacity-20"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-zinc-800 opacity-20"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-zinc-800 opacity-20"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-zinc-800 opacity-20"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-zinc-800 opacity-20"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-zinc-800 opacity-20"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-zinc-800 opacity-20"></div>
+                    </div>
+                </div>
+
+
+                <!-- DOCUMENT 4: TYPEWRITER PAGE (Entry 4) -->
+                <div class="doc-container paper-scrap p-12 md:p-16 rotate-1 relative doc-shadow bg-[#fffdf5]">
+                    <div class="tape -top-3 left-20 rotate-[-1deg]"></div>
+                    
+                    <div class="typewriter text-sm md:text-base text-zinc-800 leading-loose text-justify relative z-10">
+                        <p class="mb-8">Oct 28, 2040.</p>
+                        
+                        <p class="mb-6">I’m sitting here at my Remington, and the sound of the keys is the most honest thing in this shipping container. <span class="bg-zinc-100 font-bold">*Clack. Clack. Clack.*</span> There’s a physical resistance to it. I can feel the metal type-bar striking the ribbon, forcing the ink into the fibers of the paper.</p>
+                        
+                        <p class="mb-6">In the digital world, text is <span class="whiteout">fluid</span> fluid. It’s like water; an algorithm can "re-edit" a sentence or "adjust" a fact while you’re reading it, and you’d never know. But this paper? This is a shield.</p>
+                        
+                        <p class="mb-6">I’ve started keeping a "Real-World Almanac" for our settlement. The AI-run agriculture sites tell us that Alabama is in a state of permanent drought. But my handwritten logs show we’ve had twelve inches of rain this season. I am the only historian of my own life.</p>
+                        
+                        <p class="mb-6 font-bold">My typewriter is how I fight back against the "Dead Internet." As long as I have a fresh ribbon, the bots can’t rewrite my soul.</p>
+                    </div>
+                    
+                    <!-- Smudges -->
+                    <div class="absolute top-1/3 left-8 w-4 h-4 rounded-full bg-black opacity-5 filter blur-[1px]"></div>
+                    <div class="absolute bottom-20 right-16 w-32 h-32 border border-zinc-200 rounded-full opacity-10"></div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MAIN SCRIPT -->
+    <script>
+        // --- 1. TOGGLE VERIFICATION LOGIC ---
+        function toggleVerification() {
+            const body = document.body;
+            const btn = document.getElementById('verifyBtn');
+            const btnText = document.getElementById('btnText');
+            const btnProgress = document.getElementById('btnProgress');
+            const digitalOverlay = document.getElementById('digitalOverlay');
+            const stamp = document.getElementById('analogStamp');
+            const digitalPanel = document.getElementById('digitalPanel');
+
+            if (body.classList.contains('verify-active')) {
+                // RESET
+                body.classList.remove('verify-active');
+                digitalOverlay.classList.remove('flex');
+                digitalOverlay.classList.add('hidden');
+                stamp.style.opacity = '0';
+                digitalPanel.style.filter = 'none';
+                
+                btnText.innerText = "Initiate Verification Protocol";
+                btnProgress.style.transform = "translateX(-100%)";
+                btn.classList.remove('border-green-500', 'text-green-500');
+                btn.classList.add('border-zinc-700', 'text-zinc-400');
+            } else {
+                // ACTIVATE
+                btnText.innerText = "Scanning Global Data Streams...";
+                btnProgress.style.transform = "translateX(0%)"; // Start loading
+                
+                // Delay for effect
+                setTimeout(() => {
+                    body.classList.add('verify-active');
+                    digitalOverlay.classList.remove('hidden');
+                    digitalOverlay.classList.add('flex');
+                    stamp.style.opacity = '1';
+                    
+                    btnText.innerText = "Verification Complete: HALLUCINATION DETECTED";
+                    btn.classList.remove('border-zinc-700', 'text-zinc-400');
+                    btn.classList.add('border-green-500', 'text-green-500');
+                }, 2000);
+            }
+        }
+
+        // --- 2. THREE.JS 3D STORM ANIMATION ---
+        function initThreeJS() {
+            const container = document.getElementById('weather-3d-container');
+            if (!container) return;
+
+            // Scene Setup
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x050505, 0.05);
+
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.z = 7;
+            camera.position.y = 4;
+            camera.lookAt(0, 0, 0);
+
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            // GRID
+            const gridHelper = new THREE.GridHelper(40, 40, 0x330000, 0x110000);
+            scene.add(gridHelper);
+
+            // PARTICLE STORM SYSTEM
+            const particleCount = 10000;
+            const geometry = new THREE.BufferGeometry();
+            const positions = [];
+            const colors = [];
+
+            const colorCore = new THREE.Color(0xffffaa); // White-Yellow
+            const colorMid = new THREE.Color(0xff2200); // Bright Red
+            const colorOuter = new THREE.Color(0x330000); // Dark Red
+
+            for (let i = 0; i < particleCount; i++) {
+                // "Twisted Disc" Logic for full circle storm
+                const angle = Math.random() * Math.PI * 2;
+                // Distribute particles with bias toward center (eye wall)
+                const r = 1.2 + Math.pow(Math.random(), 1.5) * 8; 
+
+                // Spiral Twist: The angle is shifted based on radius
+                const twist = r * 0.5; 
+                const spiralAngle = angle + twist;
+
+                const x = Math.cos(spiralAngle) * r;
+                const z = Math.sin(spiralAngle) * r;
+                
+                // Height tapers off at edges
+                const y = ((Math.random() - 0.5) * (15 / r)) * 0.5 - 2;
+
+                positions.push(x, y, z);
+
+                // Color gradients based on radius
+                let mixedColor;
+                if (r < 2.5) {
+                    mixedColor = colorCore; 
+                } else if (r < 6) {
+                    mixedColor = colorCore.clone().lerp(colorMid, (r - 2.5) / 3.5);
+                } else {
+                    mixedColor = colorMid.clone().lerp(colorOuter, (r - 6) / 6);
+                }
+                colors.push(mixedColor.r, mixedColor.g, mixedColor.b);
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({ 
+                size: 0.08, 
+                vertexColors: true, 
+                transparent: true, 
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+
+            const stormSystem = new THREE.Points(geometry, material);
+            scene.add(stormSystem);
+
+            // CORE GLOW
+            const geometryCore = new THREE.SphereGeometry(1, 32, 32);
+            const materialCore = new THREE.MeshBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0.1 });
+            const coreSphere = new THREE.Mesh(geometryCore, materialCore);
+            scene.add(coreSphere);
+
+            // ANIMATION LOOP
+            function animate() {
+                requestAnimationFrame(animate);
+
+                stormSystem.rotation.y -= 0.02;
+                coreSphere.scale.setScalar(1 + Math.sin(Date.now() * 0.005) * 0.1); // Pulse
+
+                // Camera Drift
+                camera.position.x = 7 * Math.sin(Date.now() * 0.0003);
+                camera.position.z = 7 * Math.cos(Date.now() * 0.0003);
+                camera.lookAt(0, 0, 0);
+
+                renderer.render(scene, camera);
+            }
+
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+
+            animate();
+        }
+
+        window.addEventListener('DOMContentLoaded', initThreeJS);
+    </script>
+</body>
+</html>
